@@ -83,6 +83,7 @@ const deleteChildren = async (client, portfolioId) => {
 const createPortfolio = async (req, res, next) => {
   const client = await pool.connect();
   try {
+    const ownerId = req.user.id;
     const {
       template_id,
       name, title, bio,
@@ -100,10 +101,10 @@ const createPortfolio = async (req, res, next) => {
 
     const { rows } = await client.query(
       `INSERT INTO portfolios
-         (code, template_id, name, title, bio, email, phone, location, avatar_url, resume_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         (user_id, code, template_id, name, title, bio, email, phone, location, avatar_url, resume_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING id, code`,
-      [code, Number(template_id), name.trim(), title || null, bio || null,
+      [ownerId, code, Number(template_id), name.trim(), title || null, bio || null,
        email || null, phone || null, location || null, avatar_url || null, resume_url || null]
     );
 
@@ -203,13 +204,14 @@ const updatePortfolio = async (req, res, next) => {
   const client = await pool.connect();
   try {
     const { code } = req.params;
+    const ownerId = req.user.id;
 
     const existing = await client.query(
-      'SELECT id FROM portfolios WHERE code = $1 AND is_active = TRUE',
-      [code]
+      'SELECT id FROM portfolios WHERE code = $1 AND user_id = $2 AND is_active = TRUE',
+      [code, ownerId]
     );
     if (existing.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Portfolio not found' });
+      return res.status(404).json({ success: false, error: 'Portfolio not found for this user' });
     }
     const portfolioId = existing.rows[0].id;
 
@@ -267,13 +269,14 @@ const updatePortfolio = async (req, res, next) => {
 const deletePortfolio = async (req, res, next) => {
   try {
     const { code } = req.params;
+    const ownerId = req.user.id;
     const { rows } = await pool.query(
-      'UPDATE portfolios SET is_active = FALSE WHERE code = $1 AND is_active = TRUE RETURNING id',
-      [code]
+      'UPDATE portfolios SET is_active = FALSE WHERE code = $1 AND user_id = $2 AND is_active = TRUE RETURNING id',
+      [code, ownerId]
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Portfolio not found' });
+      return res.status(404).json({ success: false, error: 'Portfolio not found for this user' });
     }
 
     res.json({ success: true, message: 'Portfolio deactivated' });

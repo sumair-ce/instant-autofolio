@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { globalLimiter } = require('./middleware/rateLimit');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const authRoutes = require('./routes/auth.routes');
 const portfolioRoutes = require('./routes/portfolio.routes');
 const uploadRoutes = require('./routes/upload.routes');
 
@@ -32,6 +33,7 @@ app.get('/health', (_req, res) =>
 );
 
 // ── Routes ───────────────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/upload', uploadRoutes);
 

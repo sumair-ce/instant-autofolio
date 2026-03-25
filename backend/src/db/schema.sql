@@ -5,9 +5,19 @@
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";   -- provides gen_random_uuid()
 
+-- ── users ─────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS users (
+  id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           VARCHAR(255) NOT NULL,
+  email          VARCHAR(255) NOT NULL UNIQUE,
+  password_hash  TEXT         NOT NULL,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
 -- ── portfolios (root table) ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS portfolios (
   id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID         REFERENCES users(id) ON DELETE CASCADE,
   code         VARCHAR(8)   UNIQUE NOT NULL,           -- public shareable code
   template_id  SMALLINT     NOT NULL CHECK (template_id BETWEEN 1 AND 3),
   name         VARCHAR(255) NOT NULL,
@@ -23,6 +33,9 @@ CREATE TABLE IF NOT EXISTS portfolios (
   created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE portfolios
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE;
 
 -- ── projects ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS projects (
@@ -74,6 +87,8 @@ CREATE TABLE IF NOT EXISTS social_links (
 );
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_users_email         ON users(email);
+CREATE INDEX IF NOT EXISTS idx_portfolios_user     ON portfolios(user_id);
 CREATE INDEX IF NOT EXISTS idx_portfolios_code     ON portfolios(code);
 CREATE INDEX IF NOT EXISTS idx_portfolios_active   ON portfolios(is_active);
 CREATE INDEX IF NOT EXISTS idx_projects_portfolio  ON projects(portfolio_id);

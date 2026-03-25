@@ -29,4 +29,12 @@ const uploadLimiter = rateLimit({
   message: fmt('Upload limit reached. Try again in 15 minutes.'),
 });
 
-module.exports = { globalLimiter, createPortfolioLimiter, uploadLimiter };
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: fmt('Too many authentication attempts. Try again in 15 minutes.'),
+});
+
+module.exports = { globalLimiter, createPortfolioLimiter, uploadLimiter, authLimiter };

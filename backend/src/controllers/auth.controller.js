@@ -37,7 +37,7 @@ const signup = async (req, res, next) => {
     );
 
     const user = rows[0];
-
+    console.log('New user created:', user);
     res.status(201).json({
       success: true,
       token: signToken(user),

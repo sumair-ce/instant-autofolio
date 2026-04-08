@@ -35,7 +35,7 @@ const signup = async (req, res, next) => {
        RETURNING id, name, email, created_at`,
       [name.trim(), normalizedEmail, passwordHash]
     );
-
+    console.log('Created user:', rows[0]);
     const user = rows[0];
 
     res.status(201).json({
